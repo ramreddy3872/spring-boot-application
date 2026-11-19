@@ -1,4 +1,5 @@
- pipeline {
+
+pipeline {
     agent any
 
     environment {
@@ -44,10 +45,10 @@
                             -u "$DOCKER_USER" --password-stdin
 
                         docker build \
-                            -t $DOCKER_USER/$IMAGE_NAME:$BUILD_NUMBER .
+                            -t "$DOCKER_USER/$IMAGE_NAME:$BUILD_NUMBER" .
 
                         docker push \
-                            $DOCKER_USER/$IMAGE_NAME:$BUILD_NUMBER
+                            "$DOCKER_USER/$IMAGE_NAME:$BUILD_NUMBER"
 
                         docker logout
                     '''
@@ -66,14 +67,18 @@
                 ]) {
                     sshagent(credentials: ['deploy-ssh-key']) {
                         sh '''
-                            ssh $DEPLOY_USER@$DEPLOY_HOST "
+                            ssh -o StrictHostKeyChecking=no \
+                                $DEPLOY_USER@$DEPLOY_HOST "
+                                
                                 docker pull $DOCKER_USER/$IMAGE_NAME:$BUILD_NUMBER &&
-                                docker stop springboot-crud || true
-                                docker rm springboot-crud || true
+                                
+                                (docker stop $CONTAINER_NAME || true) &&
+                                (docker rm $CONTAINER_NAME || true) &&
+                                
                                 docker run -d \
-                                    --name springboot-crud \
+                                    --name $CONTAINER_NAME \
                                     --restart unless-stopped \
-                                    -p 8085:8085 \
+                                    -p $APP_PORT:$APP_PORT \
                                     $DOCKER_USER/$IMAGE_NAME:$BUILD_NUMBER
                             "
                         '''
