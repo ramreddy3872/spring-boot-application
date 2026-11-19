@@ -73,7 +73,7 @@
                                 docker run -d \
                                     --name springboot-crud \
                                     --restart unless-stopped \
-                                    -p 8080:8080 \
+                                    -p 8085:8085 \
                                     $DOCKER_USER/$IMAGE_NAME:$BUILD_NUMBER
                             "
                         '''
